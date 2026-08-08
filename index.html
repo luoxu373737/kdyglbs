@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <title>口袋妖怪 绿宝石</title>
+    <link rel="icon" href="docs/favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: #0b1020;
+            overflow: hidden;
+            font-family: system-ui, -apple-system, "Microsoft YaHei", "PingFang SC", sans-serif;
+        }
+        #app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+        #game { flex: 1 1 auto; min-height: 0; position: relative; }
+
+        #bar {
+            flex: 0 0 auto;
+            background: #111827;
+            border-top: 1px solid #263042;
+            color: #d1d5db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            flex-wrap: wrap;
+            box-sizing: border-box;
+        }
+        #modeBadge {
+            font-size: 13px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #1f2937;
+            color: #93c5fd;
+            white-space: nowrap;
+        }
+        #bar button {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            background: #2563eb;
+            color: #fff;
+            white-space: nowrap;
+        }
+        #bar button:hover { background: #3b82f6; }
+        #linkWrap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+        .linkBox {
+            display: flex; align-items: center; gap: 6px;
+            background: #1f2937; border-radius: 8px; padding: 4px 6px; max-width: 100%;
+        }
+        .linkTitle { font-size: 12px; color: #9ca3af; white-space: nowrap; }
+        .linkBox span.url {
+            font-size: 12px; color: #e5e7eb;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;
+        }
+        .copyBtn {
+            background: #374151; color: #e5e7eb; border: none; border-radius: 6px;
+            padding: 3px 9px; font-size: 12px; cursor: pointer;
+        }
+        .copyBtn:hover { background: #4b5563; }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(2, 6, 23, .78);
+            display: none; align-items: center; justify-content: center;
+            z-index: 9999; padding: 16px; box-sizing: border-box;
+        }
+        .overlay.show { display: flex; }
+        .modal {
+            background: #0f172a; border: 1px solid #2c3a52; border-radius: 16px;
+            width: 420px; max-width: 100%; max-height: 92vh; overflow-y: auto;
+            padding: 18px; box-sizing: border-box; color: #e5e7eb; box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        }
+        .modal h2 { margin: 0 0 14px; font-size: 20px; color: #fff; }
+        .modal .sub { font-size: 13px; color: #9ca3af; margin-bottom: 6px; }
+        .deviceRow { display: flex; gap: 10px; margin-bottom: 16px; }
+        .deviceBtn {
+            flex: 1; border: 2px solid #2c3a52; background: #111c30; color: #e2e8f0;
+            border-radius: 12px; padding: 14px 8px; font-size: 15px; cursor: pointer; text-align: center;
+        }
+        .deviceBtn small { display: block; font-size: 12px; color: #9ca3af; margin-top: 4px; }
+        .deviceBtn.active { border-color: #3b82f6; background: #1e3a8a; color: #fff; }
+        .cfgSection { border-top: 1px solid #263042; padding-top: 12px; }
+        .cfgTitle { font-size: 14px; color: #93c5fd; margin: 8px 0; }
+        .keyRow {
+            display: flex; align-items: center; gap: 10px; padding: 7px 0;
+            border-bottom: 1px solid #1c2740;
+        }
+        .keyRow:last-of-type { border-bottom: none; }
+        .keyRow .kname { flex: 1; font-size: 14px; }
+        .keyRow .keyBtn {
+            min-width: 88px; text-align: center; background: #1f2937; border: 1px solid #334155;
+            color: #e5e7eb; border-radius: 8px; padding: 6px 10px; font-size: 14px; cursor: pointer;
+        }
+        .keyBtn.cap { border-color: #f59e0b; background: #78350f; color: #fde68a; }
+        .mRow { display: flex; align-items: center; gap: 10px; padding: 7px 0; }
+        .mRow .mname { flex: 1; font-size: 14px; }
+        .mRow input[type=range] { flex: 1; }
+        .mRow .mval { width: 40px; text-align: right; font-size: 13px; color: #9ca3af; }
+        .seg { display: flex; }
+        .seg button { border: 1px solid #334155; background: #1f2937; color: #e5e7eb; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+        .seg button:first-child { border-radius: 8px 0 0 8px; }
+        .seg button:last-child { border-radius: 0 8px 8px 0; }
+        .seg button.active { background: #2563eb; color: #fff; }
+        .modal .actions { display: flex; gap: 10px; margin-top: 16px; }
+        .modal .actions button { flex: 1; border: none; border-radius: 10px; padding: 11px; font-size: 14px; cursor: pointer; }
+        .btnPrimary { background: #2563eb; color: #fff; }
+        .btnGhost { background: #1f2937; color: #e5e7eb; border: 1px solid #334155 !important; }
+        .hint { font-size: 12px; color: #78849a; line-height: 1.6; margin-top: 10px; }
+
+        .ejs_virtualGamepad_parent,
+        .ejs_virtualGamepad_parent * {
+            touch-action: none !important;
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+        /* ===== 手机端键位/摇杆位置自定义编辑器 ===== */
+        #ovEdit {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 10000; display: none;
+            background: rgba(2, 6, 23, .66);
+        }
+        #ovEdit.show { display: block; padding: 0; }
+        #ovEdit .stage {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        #ovEdit .stage.fr-active { pointer-events: auto; }
+        #ovBar {
+            position: absolute; left: 50%; transform: translateX(-50%); bottom: 18px;
+            display: flex; flex-direction: column; gap: 8px; align-items: center;
+            background: #0f172a; border: 1px solid #2c3a52; border-radius: 14px;
+            padding: 12px 14px; min-width: 240px; box-shadow: 0 12px 40px rgba(0,0,0,.55);
+            pointer-events: auto; z-index: 1;
+        }
+        #ovBar .t { font-size: 13px; color: #e5e7eb; text-align: center; }
+        #ovBar .mrow { display: flex; gap: 8px; width: 100%; }
+        #ovBar button {
+            flex: 1; border: none; border-radius: 9px; padding: 10px 6px;
+            font-size: 14px; cursor: pointer; color: #fff;
+        }
+        #ovBar .done { background: #2563eb; }
+        #ovBar .reset { background: #b45309; }
+        #ovBar .cancel { background: #374151; }
+        #ovHint { font-size: 11px; color: #93c5fd; text-align: center; }
+
+        #ovEdit .ejs_virtualGamepad_button,
+        #ovEdit .b_stick,
+        #ovEdit .b_dpad {
+            border: 2px dashed #60a5fa !important;
+            background-color: rgba(59, 130, 246, .18) !important;
+        }
+        #ovEdit .ejs_virtualGamepad_button { touch-action: none; }
+
+        /* 方向键(dpad)被移到 #game 下做百分比定位时，需要显式尺寸才会显示十字 & 提供滑动触控区域。
+           尺寸用 CSS 变量 --fr-dpad-size 控制，随"摇杆大小"滑块变化（全屏时 #game 为宿主，照常生效） */
+        #game .b_stick {
+            width: var(--fr-dpad-size, 130px);
+            height: var(--fr-dpad-size, 130px);
+        }
+
+        /* 调键位入口：注入 EmulatorJS 菜单栏(三条横杠)末尾，PC 模式隐藏 */
+        #frFab {
+            width: auto !important;
+            display: none;
+        }
+#frFab.on { display: inline-flex; align-items: center; }
+        #frFab svg { margin-right: 4px; }
+
+        #btnSaveSlot { background: #16a34a; }
+        #btnSaveSlot:hover { background: #22c55e; }
+        #btnLoadSlot { background: #374151; }
+        #btnLoadSlot:hover { background: #4b5563; }
+
+        /* 顶部轻提示 toast */
+        #grToast {
+            position: fixed; left: 50%; top: 16px; transform: translateX(-50%);
+            max-width: 86%; z-index: 99999; display: none;
+            background: rgba(17,24,39,.96); color: #e5e7eb; border: 1px solid #374151;
+            border-radius: 10px; padding: 10px 16px; font-size: 14px; line-height: 1.5;
+            box-shadow: 0 10px 30px rgba(0,0,0,.45); text-align: center;
+        }
+        #grToast.show { display: block; animation: grToastIn .18s ease; }
+        @keyframes grToastIn { from { opacity: 0; transform: translate(-50%,-8px); } to { opacity: 1; transform: translate(-50%,0); } }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="game"></div>
+        <div id="bar">
+            <span id="modeBadge">电脑端</span>
+<button id="btnSettings">更改按键设置</button>
+            <button id="btnSaveSlot">保存存档</button>
+            <button id="btnLoadSlot" class="ghostBtn">读取存档</button>
+            <div id="linkWrap"></div>
+        </div>
+    </div>
+
+    <input type="file" id="slotFile" accept=".srm,.sav,.bin" style="display:none">
+    <div id="grToast"></div>
+
+    <div class="overlay" id="ovSettings">
+        <div class="modal">
+            <h2>游玩方式与按键设置</h2>
+            <div class="sub">选择您的游玩方式，电脑端与手机端的按键配置彼此独立、互不影响。</div>
+
+            <div class="deviceRow">
+                <button class="deviceBtn active" id="devPC">电脑端游玩<small>用键盘操作，可自定义按键</small></button>
+                <button class="deviceBtn" id="devMB">手机端游玩<small>用摇杆 + 屏幕按键</small></button>
+            </div>
+
+            <div class="cfgSection" id="pcBox">
+                <div class="cfgTitle">电脑端键盘按键（点击按键后按新的键即可修改）</div>
+                <div id="pcRows"></div>
+                <div class="hint">默认：方向=WASD，A=Z，B=X，L=Q，R=E，开始=回车，选择=Shift。修改后即时生效，只影响电脑端。</div>
+            </div>
+
+            <div class="cfgSection" id="mbBox" style="display:none">
+                <div class="cfgTitle">手机端触屏按键</div>
+                <div class="mRow">
+                    <span class="mname">摇杆位置</span>
+                    <div class="seg" id="stickHand">
+                        <button data-hand="0">左手</button>
+                        <button data-hand="1">右手</button>
+                    </div>
+                </div>
+                <div class="mRow">
+                    <span class="mname">按键大小</span>
+                    <input type="range" id="mbSize" min="0.7" max="1.4" step="0.05">
+                    <span class="mval" id="mbSizeVal">1.00</span>
+                </div>
+                <div class="mRow">
+                    <span class="mname">按键透明度</span>
+                    <input type="range" id="mbOp" min="0.3" max="1" step="0.05">
+                    <span class="mval" id="mbOpVal">0.80</span>
+                </div>
+                <div class="mRow">
+                    <span class="mname">按键位置</span>
+                    <button class="keyBtn" id="btnEditLayout">编辑位置…</button>
+                </div>
+                <div class="hint">屏幕左侧为摇杆（跟手不断连），右侧为 A / B 键，中间为 开始 / 选择，上方为 L / R 键。改动即时生效并自动保存。</div>
+                <div class="hint">提示：点击“编辑位置…”，可在手机屏幕上直接拖动每个按键和摇杆到自己想要的位置。</div>
+            </div>
+
+            <div class="actions">
+                <button class="btnPrimary" id="btnApply">确定</button>
+                <button class="btnGhost" id="btnReset">恢复默认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手机端键位/摇杆位置编辑模式 -->
+    <div class="overlay" id="ovEdit">
+        <div class="stage" id="ovEditStage"></div>
+        <div id="ovBar">
+            <div class="t">拖动按键 / 摇杆调整位置</div>
+            <div id="ovHint">完成：保存本次调整并退出</div>
+            <div class="mrow">
+                <button class="done" id="ovDone">完成</button>
+                <button class="reset" id="ovResetPos">恢复默认位置</button>
+                <button class="cancel" id="ovCancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== EmulatorJS 配置（loader.js 之前声明） =====
+        window.EJS_player = "#game";
+        window.EJS_gameName = "口袋妖怪 绿宝石";
+        window.EJS_gameUrl = "data/roms/emerald.gba";
+        window.EJS_core = "gba";
+        window.EJS_pathtodata = "data/";
+        window.EJS_startOnLoaded = true;
+        window.EJS_gameID = 505;
+        window.EJS_color = "#0064ff";
+        window.EJS_disableDatabases = true;
+        window.EJS_threads = false;
+        window.EJS_backgroundColor = "#0b1020";
+        window.EJS_language = "zh-CN";
+        window.EJS_Buttons = {
+            playPause: true, restart: true, mute: true, settings: true, fullscreen: true,
+            saveState: false, loadState: false, screenRecord: false, gamepad: true,
+            cheat: true, volume: true, saveSavFiles: false, loadSavFiles: false,
+            quickSave: false, quickLoad: false, screenshot: false, cacheManager: false,
+            exitEmulation: false
+        };
+        // 自定义手机端布局：十字方向键（区域内跟手滑动）+ 屏幕按键
+        // 方向控件用 EmulatorJS 原生 dpad 类型：自带四个方向键 + touchmove 手指滑动持续切换方向
+        window.EJS_VirtualGamepadSettings = [
+            { "type": "dpad", "id": "stick", "location": "left", "left": "50%", "top": "50%", "joystickInput": false, "inputValues": [4, 5, 6, 7] },
+            { "type": "button", "text": "B", "id": "b", "location": "right", "left": 8, "top": 78, "bold": true, "input_value": 0 },
+            { "type": "button", "text": "A", "id": "a", "location": "right", "left": 82, "top": 44, "bold": true, "input_value": 8 },
+            { "type": "button", "text": "Start", "id": "start", "location": "center", "left": 60, "fontSize": 15, "block": true, "input_value": 3 },
+            { "type": "button", "text": "Select", "id": "select", "location": "center", "left": -5, "fontSize": 15, "block": true, "input_value": 2 },
+            { "type": "button", "text": "L", "id": "l", "location": "left", "left": 3, "top": -92, "bold": true, "block": true, "input_value": 10 },
+            { "type": "button", "text": "R", "id": "r", "location": "right", "right": 3, "top": -92, "bold": true, "block": true, "input_value": 11 }
+        ];
+    </script>
+
+    <script>
+        (function () {
+            // ================= 常量 =================
+            var C = { up:4, down:5, left:6, right:7, a:8, b:0, start:3, select:2, l:10, r:11 };
+            var KEY_LABEL = { 4:'方向 上', 5:'方向 下', 6:'方向 左', 7:'方向 右', 8:'A 键', 0:'B 键', 10:'L 键', 11:'R 键', 3:'开始', 2:'选择' };
+            var PC_ORDER = [4,5,6,7,8,0,10,11,3,2];
+            var KEY_NAMES = {
+                8:'Backspace',9:'Tab',13:'Enter',16:'Shift',17:'Ctrl',18:'Alt',20:'Caps',27:'Esc',32:'Space',
+                37:'方向←',38:'方向↑',39:'方向→',40:'方向↓',45:'Insert',46:'Del',
+                48:'0',49:'1',50:'2',51:'3',52:'4',53:'5',54:'6',55:'7',56:'8',57:'9',
+                65:'A',66:'B',67:'C',68:'D',69:'E',70:'F',71:'G',72:'H',73:'I',74:'J',
+                75:'K',76:'L',77:'M',78:'N',79:'O',80:'P',81:'Q',82:'R',83:'S',84:'T',85:'U',86:'V',87:'W',88:'X',89:'Y',90:'Z',
+                96:'0',97:'1',98:'2',99:'3',100:'4',101:'5',102:'6',103:'7',104:'8',105:'9',
+                186:';',187:'=',188:',',189:'-',190:'.',191:'/',192:'`',219:'[',220:'\\',221:']',222:"'"
+            };
+            function keyName(code) { return KEY_NAMES[code] || ('键 '+code); }
+
+            var PC_DEFAULTS = { 4:87,5:83,6:65,7:68,8:90,0:88,10:81,11:69,3:13,2:16 };
+            var MB_DEFAULTS = { hand:0, size:1.0, opacity:0.8 };
+
+            // ================= 状态 =================
+            var device = localStorage.getItem('ejs-em-device') || 'auto';
+            var emu = null;
+            var captureIdx = null;
+            var captureBtn = null;
+            var capturing = false;
+            var applied = false;
+            var STATIC = false;
+
+            function getPC() {
+                var stored = {};
+                try { stored = JSON.parse(localStorage.getItem('ejs-em-pc')) || {}; } catch(e){}
+                var pc = {};
+                for (var k in PC_DEFAULTS) pc[k] = (typeof stored[k] === 'number') ? stored[k] : PC_DEFAULTS[k];
+                return pc;
+            }
+            function putPC(pc) { try { localStorage.setItem('ejs-em-pc', JSON.stringify(pc)); } catch(e){} }
+            function getMB() {
+                var mb = { hand:MB_DEFAULTS.hand, size:MB_DEFAULTS.size, opacity:MB_DEFAULTS.opacity, layout:null, defLayout:null };
+                try {
+                    var s = JSON.parse(localStorage.getItem('ejs-em-mobile')) || {};
+                    if (s.hand === 0 || s.hand === 1) mb.hand = s.hand;
+                    if (typeof s.size === 'number') mb.size = s.size;
+                    if (typeof s.opacity === 'number') mb.opacity = s.opacity;
+                    if (s.layout && typeof s.layout === 'object') mb.layout = s.layout;
+                    if (s.defLayout && typeof s.defLayout === 'object') mb.defLayout = s.defLayout;
+                } catch(e){}
+                return mb;
+            }
+            function putMB(mb) { try { localStorage.setItem('ejs-em-mobile', JSON.stringify(mb)); } catch(e){} }
+            function persistDevice(d) {
+                device = d;
+                try { localStorage.setItem('ejs-em-device', d); } catch(e){}
+                updateBadge();
+            }
+            function detectDevice() { return ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'mobile' : 'pc'; }
+            function currentMode() { return (device === 'mobile' || device === 'pc') ? device : detectDevice(); }
+
+            // ================= 存档 / 设置同步 =================
+            function writeSaveToFS(gm, bytes) {
+                try {
+                    var path = (gm && typeof gm.getSaveFilePath === 'function')
+                        ? gm.getSaveFilePath()
+                        : '/data/saves/mGBA/emerald.srm';
+                    if (!path || !gm.FS) return;
+                    var parts = path.split('/'), cp = '';
+                    for (var j = 0; j < parts.length - 1; j++) {
+                        if (parts[j] === '') continue;
+                        cp += '/' + parts[j];
+                        if (!gm.FS.analyzePath(cp).exists) gm.FS.mkdir(cp);
+                    }
+                    if (gm.FS.analyzePath(path).exists) gm.FS.unlink(path);
+                    gm.FS.writeFile(path, bytes);
+                    try { if (gm.ensureRefreshSave) gm.ensureRefreshSave(); } catch(e0){}
+                } catch(e){}
+            }
+            function saveLocalSave(data) {
+                try {
+                    var arr = (data instanceof Uint8Array) ? data : new Uint8Array(data);
+                    var bin = '';
+                    for (var i = 0; i < arr.length; i++) bin += String.fromCharCode(arr[i]);
+                    try { localStorage.setItem('ejs-em-save', btoa(bin)); } catch(e){}
+                } catch(e){}
+            }
+            function restoreLocalSave(gm) {
+                if (!gm) return;
+                var s = localStorage.getItem('ejs-em-save');
+                if (!s) return;
+                try {
+                    var bin = atob(s), data = new Uint8Array(bin.length);
+                    for (var i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i) & 0xFF;
+                    writeSaveToFS(gm, data);
+                    try { if (typeof gm.loadSaveFiles === 'function') gm.loadSaveFiles(); } catch(e3){}
+                } catch(e){}
+            }
+            function pushSave(data) { if (STATIC) return; try { fetch('/api/save', { method:'POST', headers:{'Content-Type':'application/octet-stream'}, body:data }); } catch(e){} }
+            function showToast(msg) {
+                var t = document.getElementById('grToast');
+                if (!t) { try { alert(msg); } catch(e){} return; }
+                t.textContent = msg;
+                t.classList.add('show');
+                clearTimeout(showToast._tm);
+                showToast._tm = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+            }
+            // 保存存档：把当前游戏存档下载成一个文件，换浏览器/换设备后上传即可接着玩
+            function grabSaveBytes() {
+                if (emu && emu.gameManager) {
+                    try { emu.gameManager.saveSaveFiles(); } catch(e){}
+                    try {
+                        var f = emu.gameManager.getSaveFile(false);
+                        if (f && f.length) return new Uint8Array(f);
+                    } catch(e){}
+                }
+                var s = localStorage.getItem('ejs-em-save');
+                if (s) {
+                    try {
+                        var bin = atob(s), data = new Uint8Array(bin.length);
+                        for (var i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i) & 0xFF;
+                        return data;
+                    } catch(e){}
+                }
+                return null;
+            }
+            function downloadSaveSlot() {
+                var data = grabSaveBytes();
+                if (!data || !data.length) { showToast('当前没有可用的存档（游玩一段时间后会自动生成）'); return; }
+                try { emu.gameManager.saveSaveFiles(); } catch(e){}
+                var blob = new Blob([data], { type:'application/octet-stream' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = 'emerald.sav';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
+                saveLocalSave(data);
+                showToast('存档已保存。请把 emerald.sav 文件保存好');
+            }
+            function importSaveSlotBlob(blob) {
+                var fr = new FileReader();
+                fr.onload = function(){
+                    try {
+                        var data = new Uint8Array(fr.result);
+                        if (!data.length) { showToast('读取失败：文件为空'); return; }
+                        if (!emu || !emu.gameManager) { showToast('游戏还没加载完，请稍后再试'); return; }
+                        saveLocalSave(data);
+                        writeSaveToFS(emu.gameManager, data);
+                        try { emu.gameManager.loadSaveFiles(); } catch(e2){}
+                        showToast('存档已读取：正在跳回刚才的进度');
+                        try { emu.setMetadata ? 0 : 0; } catch(e3){}
+                    } catch(e) { showToast('读取失败：文件格式无法识别'); }
+                };
+                fr.onerror = function(){ showToast('读取失败：无法读取文件'); };
+                fr.readAsArrayBuffer(blob);
+            }
+            function openLoadFile() {
+                var fi = document.getElementById('slotFile');
+                if (fi) { fi.value = ''; fi.click(); }
+            }
+            var lastSettingsStr = null;
+            function pushSettings() {
+                if (STATIC) return;
+                try {
+                    var out = {};
+                    for (var i = 0; i < localStorage.length; i++) {
+                        var key = localStorage.key(i);
+                        if (key && key.indexOf('ejs-') === 0) out[key] = localStorage.getItem(key);
+                    }
+                    var str = JSON.stringify(out);
+                    if (str === lastSettingsStr) return;
+                    lastSettingsStr = str;
+                    fetch('/api/settings', { method:'POST', headers:{'Content-Type':'application/json'}, body:str });
+                } catch(e){}
+            }
+            function loadSettingsSync() {
+                if (STATIC) return;
+                try {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', '/api/settings', false);
+                    xhr.send();
+                    if (xhr.status === 200 && xhr.responseText) {
+                        var obj = JSON.parse(xhr.responseText);
+                        for (var k in obj) { try { localStorage.setItem(k, obj[k]); } catch(e3){} }
+                    }
+                } catch(e){}
+            }
+            function pressA(code) {
+                var game = document.getElementById('game');
+                if (!game) return;
+                try {
+                    game.dispatchEvent(new KeyboardEvent('keydown', { keyCode: code, which: code, bubbles: true, cancelable: true }));
+                    setTimeout(function(){ game.dispatchEvent(new KeyboardEvent('keyup', { keyCode: code, which: code, bubbles: true, cancelable: true })); }, 80);
+                } catch(e){}
+            }
+            function loadSaveSync(e) {
+                var gm = e && e.gameManager;
+                if (!gm) return;
+                if (STATIC) { restoreLocalSave(gm); return; }
+                try {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', '/api/save', false);
+                    try { xhr.overrideMimeType('text/plain; charset=x-user-defined'); } catch(e2){}
+                    xhr.send();
+                    if (xhr.status === 200 && xhr.responseText && xhr.responseText.length > 0) {
+                        var data = new Uint8Array(xhr.responseText.length);
+                        for (var i = 0; i < data.length; i++) data[i] = xhr.responseText.charCodeAt(i) & 0xFF;
+                        writeSaveToFS(gm, data);
+                    } else {
+                        restoreLocalSave(gm);
+                    }
+                } catch(e){ restoreLocalSave(gm); }
+            }
+
+            // ================= 模式应用 =================
+            function applyPC() {
+                if (!emu) return;
+                var pc = getPC();
+                if (!emu.controls) emu.controls = {};
+                if (!emu.controls[0]) emu.controls[0] = {};
+                for (var n in pc) {
+                    emu.controls[0][n] = { value: pc[n], value2: (KEY_LABEL[n] || n) };
+                }
+                try { emu.saveSettings(); } catch(e){}
+                if (emu.virtualGamepad) emu.virtualGamepad.style.display = 'none';
+                emu.touch = false;
+                // 自定义摆放的按键位于 #game，需在电脑端隐藏
+                hideMobileButtons();
+            }
+            function hideMobileButtons() {
+                var game = document.getElementById('game');
+                if (!game) return;
+                for (var i = 0; i < LAYOUT_IDS.length; i++) {
+                    var el = game.querySelector('.b_' + LAYOUT_IDS[i]);
+                    if (el) el.style.display = 'none';
+                }
+            }
+            function applyMB() {
+                if (!emu) return;
+                var mb = getMB();
+                emu.touch = true;
+                if (emu.virtualGamepad) {
+                    emu.virtualGamepad.style.display = '';
+                    emu.virtualGamepad.style.zoom = mb.size;
+                    emu.virtualGamepad.style.opacity = mb.opacity;
+                    // 方向键(dpad)尺寸：写到 #game 上的 CSS 变量。布局自定义后控件被移到 #game 下，
+                    // 不再受 virtualGamepad.zoom 控制，必须用此变量单独缩放（全屏宿主也是 #game，照常生效）。
+                    var g = document.getElementById('game');
+                    if (g) g.style.setProperty('--fr-dpad-size', Math.round(130 * mb.size) + 'px');
+                    try { emu.toggleVirtualGamepadLeftHanded(mb.hand === 1); } catch(e){}
+                    applyMBLayout();
+                }
+            }
+            function applyMode() {
+                if (currentMode() === 'mobile') applyMB(); else applyPC();
+                updateFab();
+            }
+            function updateFab() {
+                var f = document.getElementById('frFab');
+                if (!f) return;
+                f.classList.toggle('on', currentMode() === 'mobile' && !editing);
+            }
+            function initFab() {
+                if (document.getElementById('frFab') || !emu || !emu.elements || !emu.elements.menu) return;
+                var bar = emu.elements.menu;
+                var b = document.createElement('button');
+                b.id = 'frFab';
+                b.type = 'button';
+                b.classList.add('ejs_menu_button');
+                var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("role", "presentation");
+                svg.setAttribute("focusable", "false");
+                svg.setAttribute("width", "1.3em");
+                svg.setAttribute("height", "1.3em");
+                svg.setAttribute("viewBox", "0 0 24 24");
+                svg.innerHTML = '<path d="M4 16l-1 5 5-1 11-11-4-4L4 16z"/><path d="M14 6l4 4"/>';
+                var span = document.createElement('span');
+                span.classList.add('ejs_menu_text');
+                span.textContent = '调键位';
+                b.appendChild(svg);
+                b.appendChild(span);
+                b.addEventListener('click', openEditLayout);
+                bar.appendChild(b);
+                updateFab();
+            }
+            // 把编辑器遮罩挂到 #game 内部：全屏元素是 elements.parent(#game)，全屏时只有其内部内容可见
+            function mountEditor() {
+                var ov = document.getElementById('ovEdit');
+                var game = document.getElementById('game');
+                if (!ov || !game) return;
+                if (ov.parentNode === game) return;
+                game.appendChild(ov);
+            }
+
+            // ================= 底部栏与链接 =================
+            function updateBadge() {
+                var b = document.getElementById('modeBadge');
+                if (b) b.textContent = (currentMode() === 'mobile') ? '手机端' : '电脑端';
+            }
+            function initLink() {
+                var wrap = document.getElementById('linkWrap');
+                if (!wrap || wrap.childNodes.length) return;
+                try {
+                    fetch('/api/info').then(function(r){ return r.json(); }).then(function(info){
+                        if (!info || !info.local) return;
+                        var boxes = [ { t:'本机', u:info.local } ];
+                        (info.lan || []).forEach(function(u){ boxes.push({ t:'手机', u:u }); });
+                        boxes.forEach(function(bx){
+                            var box = document.createElement('div');
+                            box.className = 'linkBox';
+                            var tip = document.createElement('span');
+                            tip.className = 'linkTitle';
+                            tip.textContent = bx.t + '：';
+                            var u = document.createElement('span');
+                            u.className = 'url';
+                            u.textContent = bx.u;
+                            u.title = bx.u;
+                            var c = document.createElement('button');
+                            c.className = 'copyBtn';
+                            c.textContent = '复制';
+                            c.onclick = function(){ copyText(bx.u, c); };
+                            box.appendChild(tip); box.appendChild(u); box.appendChild(c);
+                            wrap.appendChild(box);
+                        });
+                        if (info.lan && info.lan.length) {
+                            var note = document.createElement('span');
+                            note.className = 'linkTitle';
+                            note.textContent = '手机（同一WiFi）用此链接打开即可同玩';
+                            wrap.appendChild(note);
+                        }
+                    }).catch(function(){ fallback(); });
+                } catch(e){ fallback(); }
+                function fallback() {
+                    STATIC = true;
+                    var wrap = document.getElementById('linkWrap');
+                    if (!wrap || wrap.childNodes.length) return;
+                    var box = document.createElement('div');
+                    box.className = 'linkBox';
+                    var tip = document.createElement('span');
+                    tip.className = 'linkTitle';
+                    tip.textContent = '本页链接：';
+                    var u = document.createElement('span');
+                    u.className = 'url';
+                    u.textContent = location.href;
+                    u.title = location.href;
+                    var c = document.createElement('button');
+                    c.className = 'copyBtn';
+                    c.textContent = '复制';
+                    c.onclick = function(){ copyText(location.href, c); };
+                    box.appendChild(tip); box.appendChild(u); box.appendChild(c);
+                    wrap.appendChild(box);
+                }
+            }
+            function copyText(text, btn) {
+                function done(){ var old = btn.textContent; btn.textContent = '已复制'; setTimeout(function(){ btn.textContent = old; }, 1500); }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text); done(); });
+                } else { fallbackCopy(text); done(); }
+            }
+            function fallbackCopy(text) {
+                try {
+                    var ta = document.createElement('textarea');
+                    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                    document.body.appendChild(ta); ta.select();
+                    try { document.execCommand('copy'); } catch(e){}
+                    document.body.removeChild(ta);
+                } catch(e){}
+            }
+
+            // ================= 设置弹窗 =================
+            function openSettings() {
+                document.getElementById('ovSettings').classList.add('show');
+                renderModal();
+            }
+            function closeSettings() {
+                abortCapture();
+                document.getElementById('ovSettings').classList.remove('show');
+                if (device === 'auto') persistDevice(detectDevice());
+                applyMode();
+                updateBadge();
+            }
+            function renderModal() {
+                var isMB = currentMode() === 'mobile';
+                document.getElementById('devPC').classList.toggle('active', !isMB);
+                document.getElementById('devMB').classList.toggle('active', isMB);
+                document.getElementById('pcBox').style.display = isMB ? 'none' : '';
+                document.getElementById('mbBox').style.display = isMB ? '' : 'none';
+                renderPC();
+                renderMB();
+            }
+            function renderPC() {
+                var pc = getPC();
+                var rows = document.getElementById('pcRows');
+                rows.innerHTML = '';
+                for (var i = 0; i < PC_ORDER.length; i++) {
+                    (function(n){
+                        var row = document.createElement('div');
+                        row.className = 'keyRow';
+                        var nm = document.createElement('span');
+                        nm.className = 'kname';
+                        nm.textContent = KEY_LABEL[n];
+                        var btn = document.createElement('button');
+                        btn.className = 'keyBtn';
+                        btn.textContent = keyName(pc[n]);
+                        btn.addEventListener('click', function(){ beginCapture(n, btn); });
+                        row.appendChild(nm);
+                        row.appendChild(btn);
+                        rows.appendChild(row);
+                    })(PC_ORDER[i]);
+                }
+            }
+            function renderMB() {
+                var mb = getMB();
+                var sl = document.getElementById('mbSize');
+                sl.value = mb.size;
+                document.getElementById('mbSizeVal').textContent = mb.size.toFixed(2);
+                var op = document.getElementById('mbOp');
+                op.value = mb.opacity;
+                document.getElementById('mbOpVal').textContent = mb.opacity.toFixed(2);
+                var btns = document.querySelectorAll('#stickHand button');
+                for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', parseInt(btns[i].dataset.hand, 10) === mb.hand);
+            }
+            function beginCapture(n, btn) {
+                abortCapture();
+                capturing = true;
+                captureBtn = btn;
+                captureIdx = n;
+                btn.classList.add('cap');
+                btn.textContent = '按下按键...';
+                document.addEventListener('keydown', captureHandler, true);
+            }
+            function abortCapture() {
+                capturing = false;
+                document.removeEventListener('keydown', captureHandler, true);
+                if (captureBtn) { captureBtn.classList.remove('cap'); captureBtn = null; }
+                captureIdx = null;
+            }
+            function captureHandler(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var code = e.keyCode || e.which;
+                if (code === 27) { abortCapture(); renderPC(); return; }
+                if (captureIdx == null) { abortCapture(); return; }
+                var pc = getPC();
+                pc[captureIdx] = code;
+                putPC(pc);
+                abortCapture();
+                applyPC();
+                renderPC();
+            }
+            function resetAll() {
+                var pc = {};
+                for (var k in PC_DEFAULTS) pc[k] = PC_DEFAULTS[k];
+                putPC(pc);
+                var mb = getMB();
+                mb.hand = MB_DEFAULTS.hand;
+                mb.size = MB_DEFAULTS.size;
+                mb.opacity = MB_DEFAULTS.opacity;
+                putMB(mb);
+                applyMode();
+                renderModal();
+            }
+
+            // ================= 手机端键位/摇杆位置编辑 =================
+            var LAYOUT_IDS = ['stick', 'a', 'b', 'start', 'select', 'l', 'r'];
+            var editState = null;   // { els: [el], orig: {id: {style, parent}} }
+            var editing = false;
+
+            function vp() { return (emu && emu.virtualGamepad) ? emu.virtualGamepad : null; }
+            function getLayout() { var mb = getMB(); return (mb && mb.layout) || null; }
+            function setLayout(l) {
+                var mb = getMB();
+                mb.layout = l;
+                putMB(mb);
+            }
+            function getDefaultLayout() { var mb = getMB(); return (mb && mb.defLayout) || null; }
+            // 捕获 Emulator 默认键位（仅当手柄尚未被自定义过时有效）
+            function captureDefaultLayout() {
+                if (getDefaultLayout()) return;
+                var game = document.getElementById('game');
+                if (!game) return;
+                var layout = {};
+                var ok = false;
+                for (var i = 0; i < LAYOUT_IDS.length; i++) {
+                    var id = LAYOUT_IDS[i];
+                    var el = game.querySelector('.b_' + id);
+                    if (!el) continue;
+                    var r = el.getBoundingClientRect();
+                    layout[id] = { x: Math.round(r.left), y: Math.round(r.top) };
+                    ok = true;
+                }
+                if (ok) {
+                    var mb = getMB();
+                    mb.defLayout = layout;
+                    putMB(mb);
+                }
+            }
+            function applyMBLayout() {
+                var game = document.getElementById('game');
+                if (!game || !emu) return;
+                var mb = getMB();
+                var layout = getLayout();
+                if (!layout) { showMobileButtons(); return; }
+                for (var i = 0; i < LAYOUT_IDS.length; i++) {
+                    var id = LAYOUT_IDS[i];
+                    var el = game.querySelector('.b_' + id);
+                    if (!el || !layout[id]) continue;
+                    el.style.position = 'absolute';
+                    // 布局存的是相对视口的比例(0~1)。用百分比定位，全屏/缩放/旋转时按键始终按比例跟随屏幕
+                    // 注意：emulator 会给 virtualGamepad 加 zoom，但我们这些按键放在 #game 下不受其影响；
+                    // 因此用固定 px 尺寸 + 百分比位置，避免 top/left 与 zoom 叠加出错。
+                    el.style.left = (layout[id].x * 100) + '%';
+                    el.style.top = (layout[id].y * 100) + '%';
+                    el.style.right = '';
+                    el.style.bottom = '';
+                    el.style.zoom = '1';
+                    el.style.opacity = (typeof mb.opacity === 'number') ? mb.opacity : 0.8;
+                    el.style.marginLeft = '';
+                    el.style.marginTop = '';
+                    el.style.display = '';
+                    game.appendChild(el);
+                }
+            }
+            function showMobileButtons() {
+                var game = document.getElementById('game');
+                if (!game) return;
+                for (var i = 0; i < LAYOUT_IDS.length; i++) {
+                    var el = game.querySelector('.b_' + LAYOUT_IDS[i]);
+                    if (el && el.style.display === 'none') el.style.display = '';
+                }
+            }
+            function setBlockDrag(e) {
+                if (!editing) return;
+                var t = e.target;
+                if (t && t.closest && t.closest('#ovEditStage')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+            // 进入编辑：把游戏pad子元素搬到舞台层，绑定拖拽
+            function openEditLayout() {
+                if (!emu || editState) return;
+                var parent = vp();
+                var game = document.getElementById('game');
+                if (!parent || !game) return;
+                abortCapture();
+                document.getElementById('ovSettings').classList.remove('show');
+                emu.touch = true;
+                if (parent.style.display === 'none') parent.style.display = '';
+                try { emu.toggleVirtualGamepadLeftHanded(getMB().hand === 1); } catch(e){}
+                // 先按已保存布局摆放，方便直接微调
+                applyMBLayout();
+                var stage = document.getElementById('ovEditStage');
+                var orig = {};
+                var els = [];
+                for (var i = 0; i < LAYOUT_IDS.length; i++) {
+                    var id = LAYOUT_IDS[i];
+                    var el = game.querySelector('.b_' + id);
+                    if (!el) continue;
+                    var r = el.getBoundingClientRect();
+                    orig[id] = { style: el.getAttribute('style') || '', parent: el.parentNode };
+                    el.style.position = 'absolute';
+                    el.style.left = r.left + 'px';
+                    el.style.top = r.top + 'px';
+                    el.style.right = '';
+                    el.style.bottom = '';
+                    el.style.zoom = '';
+                    el.style.marginLeft = '';
+                    el.style.marginTop = '';
+                    stage.appendChild(el);
+                    el.setAttribute('data-fr-id', id);
+                    el.addEventListener('pointerdown', dragPointerDown);
+                    el.addEventListener('pointermove', dragPointerMove);
+                    el.addEventListener('pointerup', dragPointerUp);
+                    el.addEventListener('pointercancel', dragPointerUp);
+                    els.push(el);
+                }
+                editState = { els: els, orig: orig };
+                editing = true;
+                stage.classList.add('fr-active');
+                document.getElementById('ovEdit').classList.add('show');
+                updateFab();
+                updateEditHint();
+            }
+            function dragPointerDown(e) {
+                var el = e.currentTarget;
+                if (!el) return;
+                e.preventDefault();
+                e.stopPropagation();
+                var r = el.getBoundingClientRect();
+                el._fr_ox = e.clientX - r.left;
+                el._fr_oy = e.clientY - r.top;
+                try { el.setPointerCapture(e.pointerId); } catch(err){}
+            }
+            function dragPointerMove(e) {
+                var el = e.currentTarget;
+                if (!el || el._fr_ox == null) return;
+                e.preventDefault();
+                e.stopPropagation();
+                var r = el.getBoundingClientRect();
+                var nx = e.clientX - el._fr_ox;
+                var ny = e.clientY - el._fr_oy;
+                var maxX = window.innerWidth - r.width;
+                var maxY = window.innerHeight - r.height;
+                if (nx < 0) nx = 0;
+                if (ny < 0) ny = 0;
+                if (nx > maxX) nx = maxX;
+                if (ny > maxY) ny = maxY;
+                el.style.left = nx + 'px';
+                el.style.top = ny + 'px';
+            }
+            function dragPointerUp(e) {
+                var el = e.currentTarget;
+                if (el) { el._fr_ox = null; el._fr_oy = null; try { el.releasePointerCapture(e.pointerId); } catch(err){} }
+            }
+            function updateEditHint() {
+                var has = getLayout();
+                document.getElementById('ovResetPos').style.display = has ? '' : 'none';
+            }
+            // save=true 保存；save=false 恢复原状（取消）
+            function exitEditLayout(save) {
+                if (!editState) return;
+                var game = document.getElementById('game');
+                var stage = document.getElementById('ovEditStage');
+                var st = editState;
+                editState = null;
+                editing = false;
+                st.els.forEach(function (el) {
+                    el.removeEventListener('pointerdown', dragPointerDown);
+                    el.removeEventListener('pointermove', dragPointerMove);
+                    el.removeEventListener('pointerup', dragPointerUp);
+                    el.removeEventListener('pointercancel', dragPointerUp);
+                    try { if (el.releasePointerCapture) el.releasePointerCapture(); } catch(e){}
+                });
+                if (save) {
+                    var layout = {};
+                    st.els.forEach(function (el) {
+                        var r = el.getBoundingClientRect();
+                        var id = el.getAttribute('data-fr-id');
+                        // 保存相对视口的比例(0~1)，全屏/旋转/缩放时按比例定位不漂移
+                        layout[id] = {
+                            x: Math.max(0, Math.min(1, r.left / window.innerWidth)),
+                            y: Math.max(0, Math.min(1, r.top / window.innerHeight))
+                        };
+                    });
+                    setLayout(layout);
+                    if (game) st.els.forEach(function (el) { game.appendChild(el); });
+                } else {
+                    st.els.forEach(function (el) {
+                        var o = st.orig[el.getAttribute('data-fr-id')];
+                        if (!o) return;
+                        el.setAttribute('style', o.style);
+                        if (o.parent && el.parentNode !== o.parent) o.parent.appendChild(el);
+                    });
+                }
+                stage.classList.remove('fr-active');
+                document.getElementById('ovEdit').classList.remove('show');
+                applyMode();
+            }
+            // 恢复默认位置：清空布局后会刷新，让 Emulator 重建默认手柄位置
+            function resetLayoutPos() {
+                setLayout(null);
+                if (typeof window.confirm === 'function') {
+                    try { if (!window.confirm('恢复所有按键/摇杆到默认位置？页面将刷新。')) return; } catch(e){}
+                }
+                location.reload();
+            }
+
+            // ================= 初始化 =================
+            var hooked = false;
+            function tryHook() {
+                if (window.EmulatorJS && !window.EmulatorJS.__savPatched) {
+                    window.EmulatorJS.__savPatched = true;
+                    var origStart = window.EmulatorJS.prototype.startGame;
+                    window.EmulatorJS.prototype.startGame = function () {
+                        loadSettingsSync();
+                        device = localStorage.getItem('ejs-em-device') || 'auto';
+                        loadSaveSync(this);
+                        return origStart.apply(this, arguments);
+                    };
+                }
+                var e = window.EJS_emulator;
+                if (!e || hooked) return;
+                hooked = true;
+                emu = e;
+                initFab();
+                mountEditor();
+
+                emu.on("saveSaveFiles", function(s){ if (s) { pushSave(s); saveLocalSave(s); } });
+                setInterval(function(){ if (emu.started) { try { emu.gameManager.saveSaveFiles(); } catch(e2){} } }, 10000);
+                setInterval(pushSettings, 4000);
+                window.addEventListener('beforeunload', function(){ try { emu.gameManager.saveSaveFiles(); } catch(e2){} pushSettings(); });
+
+                emu.on("start", function(){
+                    // 游戏完全启动后，把本地存储的存档灌回游戏（读档机制）
+                    try { if (emu && emu.gameManager) restoreLocalSave(emu.gameManager); } catch(e0){}
+                    if (applied) return;
+                    applied = true;
+                    if (device === 'auto') {
+                        if (localStorage.getItem('ejs-em-device')) {
+                            device = localStorage.getItem('ejs-em-device');
+                        } else {
+                            // 首次进入，让玩家选择游玩方式
+                            setTimeout(openSettings, 600);
+                            persistDevice(detectDevice());
+                            initLink();
+                            applyMode();
+                            updateBadge();
+                            return;
+                        }
+                    }
+                    initLink();
+                    captureDefaultLayout();
+                    applyMode();
+                    updateBadge();
+                });
+
+// 底部按钮
+                document.getElementById('btnSettings').addEventListener('click', openSettings);
+                document.getElementById('btnSaveSlot').addEventListener('click', downloadSaveSlot);
+                document.getElementById('btnLoadSlot').addEventListener('click', openLoadFile);
+                document.getElementById('slotFile').addEventListener('change', function(ev){
+                    if (ev.target.files && ev.target.files.length) importSaveSlotBlob(ev.target.files[0]);
+                });
+                document.getElementById('devPC').addEventListener('click', function(){ persistDevice('pc'); renderModal(); applyMode(); });
+                document.getElementById('devMB').addEventListener('click', function(){ persistDevice('mobile'); renderModal(); applyMode(); });
+                document.getElementById('btnApply').addEventListener('click', closeSettings);
+                document.getElementById('btnReset').addEventListener('click', resetAll);
+
+                // 手机端选项
+                var handBtns = document.querySelectorAll('#stickHand button');
+                for (var i = 0; i < handBtns.length; i++) handBtns[i].addEventListener('click', function(){
+                    var mb = getMB(); mb.hand = parseInt(this.dataset.hand, 10); putMB(mb); renderMB();
+                    if (currentMode() === 'mobile') applyMB();
+                });
+                document.getElementById('mbSize').addEventListener('input', function(){
+                    var mb = getMB(); mb.size = parseFloat(this.value); putMB(mb); renderMB();
+                    if (currentMode() === 'mobile') applyMB();
+                });
+                document.getElementById('mbOp').addEventListener('input', function(){
+                    var mb = getMB(); mb.opacity = parseFloat(this.value); putMB(mb); renderMB();
+                    if (currentMode() === 'mobile') applyMB();
+                });
+                document.getElementById('btnEditLayout').addEventListener('click', openEditLayout);
+                document.getElementById('ovDone').addEventListener('click', function(){ exitEditLayout(true); });
+                document.getElementById('ovResetPos').addEventListener('click', resetLayoutPos);
+                document.getElementById('ovCancel').addEventListener('click', function(){ exitEditLayout(false); });
+                document.addEventListener('touchstart', setBlockDrag, true);
+                document.addEventListener('touchmove', setBlockDrag, true);
+                document.addEventListener('touchend', setBlockDrag, true);
+
+                // 电脑端：点击画面 = A
+                var game = document.getElementById('game');
+                game.addEventListener('click', function(ev){
+                    if (!emu || !emu.started) return;
+                    if (currentMode() === 'mobile') return;
+                    if (ev.target.closest('button, input, select, textarea, a')) return;
+                    if (ev.target.closest('.ejs_bottom_bar, .ejs_context_menu, .ejs_menubar')) return;
+                    var code = 90;
+                    try { var c = emu.controls && emu.controls[0] && emu.controls[0][8]; if (c && typeof c.value === 'number') code = c.value; } catch(e2){}
+                    pressA(code);
+                });
+
+                // 更新模式徽标
+                updateBadge();
+            }
+            setInterval(tryHook, 100);
+            tryHook();
+        })();
+    </script>
+    <script src="data/loader.js"></script>
+</body>
+</html>
